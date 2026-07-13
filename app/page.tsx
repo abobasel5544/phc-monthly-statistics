@@ -43,13 +43,21 @@ function setWorkbookPeriodHeaders(wb:any, ws:any, m:any, selectedMonth:string, s
 }
 function key(centerId:string,year:string,month:string,moduleId:string,cell:string){return `stat:${centerId}:${year}:${month}:${moduleId}:${cell}`}
 function firestoreFormDocId(centerId:string,year:string,month:string,moduleId:string){return `${centerId}_${year}_${month}_${moduleId}`.replace(/[^a-zA-Z0-9_-]/g,'_')}
-function cleanLabel(label:string, cell:string){
- const raw=(label||'').trim();
- const looksLikeCell=/^[A-Z]+\d+$/.test(raw);
- const hasOldNumbers=/\d+\s*\/\s*\d+|^[\d\s:.-]+$/.test(raw);
- const cleaned=raw.replace(/\s*\([A-Z]+\d+\)\s*/g,'').trim();
- if(!cleaned || looksLikeCell || hasOldNumbers) return 'حقل إدخال إحصائي';
- return cleaned.replace(/^[0-9]+\s*\/\s*/g,'').replace(/\s*\/\s*[0-9]+$/g,'').trim();
+function cleanLabel(label: string, cell: string) {
+  const raw = (label || "").trim();
+
+  // تجاهل فقط إذا كانت القيمة مرجع خلية مثل B12 أو C5
+  if (/^[A-Z]+\d+$/.test(raw)) {
+    return "";
+  }
+
+  // إزالة مرجع الخلية إذا كان مكتوباً داخل النص
+  let cleaned = raw.replace(/\s*\([A-Z]+\d+\)\s*/g, "").trim();
+
+  // إزالة المسافات الزائدة فقط
+  cleaned = cleaned.replace(/\s+/g, " ").trim();
+
+  return cleaned;
 }
 const defaultFiveRowStarts:any={
  c07:5,   // الربيع والتوفيق / شرق الخط حسب القالب القديم
@@ -524,7 +532,7 @@ function baseBlockWidth(m:any){return Number(m.blockWidth||999)}
 function headerForColumn(m:any,col:number){
  const hit=m.fields.find((x:any)=>Number(x.row)===4 && Number(x.col)===col) || m.fields.find((x:any)=>Number(x.row)===3 && Number(x.col)===col) || m.fields.find((x:any)=>Number(x.row)===2 && Number(x.col)===col);
  const label=hit?cleanLabel(hit.label,hit.cell):'';
- if(!label || label==='حقل إدخال إحصائي') return `حقل إدخال ${colName(col)}`;
+ if (!label) return "";
  return label.replace('بيان بالقوى العاملة بالمركز خلال الشهر / ','').replace('بيان عدد السكان والأسر المشمولين بالخدمة من واقع الملفات الصحية / ','').replace('المرضى والأفلام / ','').replace('العمر بالسنين / ','');
 }
 function isAutoTotalHeader(text:string){
